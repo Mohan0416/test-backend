@@ -3,7 +3,7 @@ services:
     name: backend
     env: node
     plan: free
-    buildCommand: npm install && npm run build && npx prisma generate && npx prisma migrate deploy
+    buildCommand: npm install && npm run build && npm run generate && npm run migrate
     startCommand: npm run start
     envVars:
       - key: NODE_ENV

@@ -7,8 +7,8 @@
     "dev": "ts-node-dev src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "migrate": "prisma migrate deploy",
-    "generate": "prisma generate"
+    "migrate": "npx prisma migrate deploy",
+    "generate": "npx prisma generate"
   },
   "author": "naveen",
   "license": "ISC",
