@@ -1,77 +1,115 @@
 # Render Deployment Guide
 
+## Important: Render Free Tier Limitation
+Render free tier **blocks execution of Prisma CLI** (prisma, npx prisma). Therefore:
+- ❌ Prisma client generation **CANNOT** run on Render
+- ❌ Migrations **CANNOT** run on Render  
+- ✅ Only dependencies install + TypeScript build + app startup
+
 ## Pre-Deployment Setup
 
-### 1. Run Migrations Locally
-Before each deployment, ensure all pending migrations are applied to your database:
+### Step 1: Generate Prisma Client Locally
+Before each deployment, ensure Prisma client is generated:
 
 ```bash
-npx prisma migrate deploy
+npm run generate
 ```
 
-This applies any new migrations in the `prisma/migrations/` folder to your Supabase database.
+This creates the Prisma client in `node_modules/@prisma/client/`.
 
-### 2. Verify Your Environment
-Make sure you have the correct database connection in your `.env`:
+### Step 2: Run Migrations Locally
+Apply pending migrations to your Supabase database:
+
+```bash
+npm run migrate:local
 ```
-DATABASE_URL_POOLER=postgresql://postgres.jyxdmdincaakoflpkjqb:manomohan@2004@aws-1-ap-south-1.pooler.supabase.com:6543/postgres
+
+This applies migrations in `prisma/migrations/` to your database.
+
+### Step 3: Verify Everything Builds
+```bash
+npm run build
 ```
+
+This compiles TypeScript to JavaScript in the `dist/` folder.
 
 ## Deployment Process
 
-### Step 1: Push Code to GitHub
+### Step 1: Commit and Push
 ```bash
 git add .
-git commit -m "Your commit message"
+git commit -m "Pre-deployment: generate Prisma client and apply migrations"
 git push origin main
 ```
 
-### Step 2: Trigger Render Deployment
+### Step 2: Deploy to Render
 1. Go to [render.com](https://render.com)
 2. Navigate to your **backend** service
 3. Click **"Manual Deploy"** → **"Deploy latest commit"**
 
-### What Happens During Build
-1. ✅ `npm install` - Installs all dependencies
-2. ✅ `postinstall` hook - Runs `npx prisma generate` (generates Prisma client)
-3. ✅ `npm run build` - Compiles TypeScript to JavaScript
-4. ✅ Service starts with `npm run start`
+### What Happens During Build on Render
+1. ✅ `npm install` - Installs all dependencies (node_modules)
+2. ✅ `npm run build` - Compiles TypeScript to JavaScript
+3. ✅ `npm start` - Starts the Node.js server
 
-### What Does NOT Happen
-- ❌ No migrations run on Render (due to free tier restrictions)
-- ❌ No Prisma CLI execution on Render
+### What Does NOT Happen on Render
+- ❌ No Prisma client generation (pre-generated locally)
+- ❌ No migrations (applied locally before deploy)
+- ❌ No Prisma CLI execution (blocked on free tier)
 
-## Important Notes
+## Complete Deployment Checklist
 
-- **Migrations must be run locally** before deployment
-- The Prisma client is generated automatically during `npm install` via postinstall
-- TypeScript is compiled to JavaScript during the build
-- Your database schema changes are applied before pushing code
+- [ ] Run `npm run generate` - Generate Prisma client
+- [ ] Run `npm run migrate:local` - Apply migrations to database
+- [ ] Run `npm run build` - Verify TypeScript compiles
+- [ ] Run `git add . && git commit ... && git push` - Push to GitHub
+- [ ] On Render: Click "Manual Deploy" and monitor build logs
 
 ## Environment Variables on Render
 
-Ensure these are set in your Render dashboard:
-- `NODE_ENV`: `production`
-- `PORT`: `10000`
-- `DATABASE_URL_POOLER`: Your Supabase pooler connection string
-- `JWT_SECRET`: Your JWT secret
-- `CORS_ORIGIN`: Your frontend URL
+Ensure these are set in your Render dashboard under "Environment":
+```
+NODE_ENV=production
+PORT=10000
+DATABASE_URL_POOLER=postgresql://postgres.jyxdmdincaakoflpkjqb:manomohan@2004@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?schema=public&pgbouncer=true
+JWT_SECRET=<your-jwt-secret>
+CORS_ORIGIN=<your-frontend-url>
+```
 
 ## Troubleshooting
 
-### Build Fails: "prisma: permission denied"
-✅ **Fixed** - Prisma now generates via postinstall script, not during build
+### "PrismaClientInitializationError: Prisma Client is missing"
+**Cause**: Prisma client wasn't generated before deployment  
+**Fix**: Run `npm run generate` locally before pushing
 
-### Build Fails: "Cannot find module"
-- Check that all dependencies are properly listed in `package.json`
-- Ensure `typescript` and `@types/*` are in `dependencies`, not just `devDependencies`
+### "Can't reach database server"
+**Cause**: DATABASE_URL_POOLER not set or incorrect  
+**Fix**: Verify environment variable in Render dashboard
 
-### Application Starts but Crashes
-- Check Render logs for errors
-- Verify `DATABASE_URL_POOLER` is set correctly
-- Check that migrations have been run on the database
+### Build fails with "Command failed"
+1. Check Render logs for specific error
+2. Verify all environment variables are set
+3. Ensure Prisma client was generated: `npm run generate`
 
-### Can't Connect to Database
-- Verify the pooler connection string is correct
-- Ensure the string includes `?schema=public&pgbouncer=true`
-- Check Supabase dashboard for connection issues
+### Application crashes on startup
+1. Check database connection: verify DATABASE_URL_POOLER
+2. Verify all migrations have been applied: `npm run migrate:local`
+3. Check application logs in Render dashboard
+
+## Quick Reference
+
+**Local commands before deployment:**
+```bash
+npm run generate          # Generate Prisma client
+npm run migrate:local     # Run pending migrations
+npm run build             # Compile TypeScript
+git push origin main      # Push to GitHub
+```
+
+**Then on Render:** Manual Deploy → Deploy latest commit
+
+## Notes
+- Prisma client must be generated on **your local machine**, not on Render
+- Migrations must be applied to Supabase **before deployment**
+- Render will only run `npm install` and `npm run build`
+- Application starts with `npm run start`

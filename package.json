@@ -6,10 +6,9 @@
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
     "build": "tsc",
-    "postinstall": "npx prisma generate",
     "start": "node dist/server.js",
-    "migrate": "npx prisma migrate deploy",
-    "generate": "npx prisma generate"
+    "generate": "npx prisma generate",
+    "migrate:local": "npx prisma migrate deploy"
   },
   "author": "naveen",
   "license": "ISC",
