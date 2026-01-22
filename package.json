@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
-    "build": "tsc",
+    "build": "tsc && node copy-generated.js",
     "start": "node dist/server.js",
     "generate": "npx prisma generate",
     "migrate:local": "npx prisma migrate deploy"
