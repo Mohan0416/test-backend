@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
     "build": "tsc && node copy-generated.js",
+    "postinstall": "node generate-client.js || true",
     "start": "node dist/server.js",
     "generate": "npx prisma generate",
     "migrate:local": "npx prisma migrate deploy"

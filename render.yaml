@@ -18,3 +18,5 @@ services:
         sync: false
       - key: CORS_ORIGIN
         value: https://your-frontend-url.com
+      - key: PRISMA_SKIP_VALIDATION_WARNING
+        value: "true"
